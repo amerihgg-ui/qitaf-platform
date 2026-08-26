@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="قِطاف للبيع والتوزيع" />
+  <title>قِطاف | نسخة المراجعة</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <div class="review-bar"><b>نسخة المراجعة</b><span>يمكنك الآن مشاهدة جميع الواجهات</span><div class="view-switch"><button data-view="store" class="active">واجهة العميل</button><button data-view="driver">لوحة المندوب</button><button data-view="admin">لوحة الإدارة</button></div></div>
+
+  <section id="store" class="view active-view">
+    <header class="site-header">
+      <a class="logo" href="#"><img src="assets/logo.svg" alt="قِطاف" /></a>
+      <nav><a href="#products">المنتجات</a><a href="#categories">الأقسام</a><a href="#about">من نحن</a></nav>
+      <div class="head-actions"><button class="ghost">⌕ بحث</button><button class="ghost">حسابي</button><button class="cart-button" id="openCart">السلة <span id="cartCount">0</span></button></div>
+    </header>
+    <main>
+      <section class="hero">
+        <div class="hero-copy"><span class="kicker">من المزرعة إلى باب بيتك</span><h1>طازج كل يوم.<br><em>مختار ليك.</em></h1><p>منتجات غذائية وفاكهة بجودة نثق بها، بالكيلو أو الصندوق، وتوصيل في الموعد المناسب لك.</p><div class="hero-buttons"><a href="#products" class="primary">ابدأ التسوق ←</a><a href="#" class="secondary">تواصل واتساب</a></div><div class="trust"><span>✓ دفع عند الاستلام</span><span>✓ جودة مضمونة</span><span>✓ توصيل مرن</span></div></div>
+        <div class="hero-photo"><img src="assets/hero.png" alt="فاكهة وخضروات طازجة"/><div class="quality"><b>اختيار يومي</b><small>نختار الطازج قبل التوصيل</small></div></div>
+      </section>
+      <section class="quick-stats"><div><b>+40</b><span>منتج طازج</span></div><div><b>3</b><span>مناطق توصيل</span></div><div><b>كيلو وصندوق</b><span>خيارات شراء مرنة</span></div></section>
+      <section class="content" id="categories"><div class="section-head"><div><small>تسوّق بسهولة</small><h2>اختار القسم المناسب</h2></div><a href="#products">عرض الكل ←</a></div><div class="categories"><article><i>🍎</i><b>الفاكهة</b><span>طازجة يوميًا</span></article><article><i>🥬</i><b>الخضروات</b><span>حصاد مختار</span></article><article><i>📦</i><b>الصناديق</b><span>توفير أكبر</span></article><article><i>🌰</i><b>المكسرات</b><span>جودة ممتازة</span></article></div></section>
+      <section class="content products-bg" id="products"><div class="section-head"><div><small>الأكثر طلبًا</small><h2>مختارات قِطاف</h2></div><div class="filters"><button class="active">الكل</button><button>فاكهة</button><button>خضروات</button></div></div><div class="products" id="productGrid"></div></section>
+      <section class="cta"><div><small>محتاج طلبك بسرعة؟</small><h2>اطلب الآن وسنحدد أقرب موعد</h2></div><button>ابدأ طلبك</button></section>
+    </main>
+    <footer id="about"><img src="assets/logo-light.svg" alt="قِطاف"/><p>منتجات طازجة، خدمة موثوقة، وتوصيل أقرب إليك.</p><span>© قِطاف للبيع والتوزيع</span></footer>
+  </section>
+
+  <section id="driver" class="view dashboard-view">
+    <aside class="sidebar"><img src="assets/logo-light.svg" alt="قِطاف"/><p>لوحة المندوب</p><nav><button class="active">▦ الطلبات اليوم</button><button>⌖ مناطق التوصيل</button><button>✓ الطلبات المكتملة</button><button>◷ سجل التحصيل</button></nav><div class="side-user"><span>م</span><div><b>محمد أحمد</b><small>مندوب التوزيع</small></div></div></aside>
+    <main class="dashboard"><div class="dash-top"><div><small>الثلاثاء، 26 أغسطس</small><h1>صباح الخير يا محمد 👋</h1></div><button class="outline">تسجيل الخروج</button></div><div class="metric-grid"><article><span>طلبات اليوم</span><b>12</b><small class="orange">4 جديدة</small></article><article><span>قيد التوصيل</span><b>5</b><small>داخل 3 مناطق</small></article><article><span>تم التسليم</span><b>7</b><small class="green">58% من الطلبات</small></article><article><span>المبلغ المحصّل</span><b>4,280 <i>ل.ت</i></b><small>نقدي وتحويل</small></article></div><div class="panel-head"><div><small>جدول العمل</small><h2>طلبات تحتاج إجراء</h2></div><button class="primary small">بدء خط التوصيل</button></div><div class="order-list" id="driverOrders"></div></main>
+  </section>
+
+  <section id="admin" class="view dashboard-view">
+    <aside class="sidebar"><img src="assets/logo-light.svg" alt="قِطاف"/><p>لوحة الإدارة</p><nav><button class="active">▦ نظرة عامة</button><button>□ الطلبات</button><button>◫ المنتجات والمخزون</button><button>♙ المندوبون</button><button>♧ الموردون</button><button>◉ العملاء</button><button>₺ الحسابات</button><button>⚙ الإعدادات</button></nav><div class="side-user"><span>إ</span><div><b>مدير النظام</b><small>صلاحية كاملة</small></div></div></aside>
+    <main class="dashboard"><div class="dash-top"><div><small>ملخص النشاط</small><h1>لوحة الإدارة</h1></div><div class="admin-actions"><button class="outline">طباعة تقرير</button><button class="primary small">+ إضافة منتج</button></div></div><div class="metric-grid admin-metrics"><article><span>مبيعات اليوم</span><b>8,750 <i>ل.ت</i></b><small class="green">↑ 12% عن أمس</small></article><article><span>الطلبات الجديدة</span><b>18</b><small class="orange">3 تحتاج موافقة</small></article><article><span>منتجات منخفضة</span><b>6</b><small>تحتاج إعادة توريد</small></article><article><span>رصيد الخزنة</span><b>24,630 <i>ل.ت</i></b><small>آخر تحديث الآن</small></article></div><div class="admin-grid"><section class="panel"><div class="panel-head"><div><small>آخر الطلبات</small><h2>حركة البيع</h2></div><button class="text-button">عرض الكل</button></div><div class="table-wrap"><table><thead><tr><th>الطلب</th><th>العميل</th><th>القيمة</th><th>الحالة</th></tr></thead><tbody><tr><td>#1048</td><td>أحمد محمود</td><td>1,240 ل.ت</td><td><span class="status review">تحتاج موافقة</span></td></tr><tr><td>#1047</td><td>سارة علي</td><td>680 ل.ت</td><td><span class="status delivery">قيد التوصيل</span></td></tr><tr><td>#1046</td><td>خالد حسن</td><td>425 ل.ت</td><td><span class="status done">تم التسليم</span></td></tr><tr><td>#1045</td><td>محمود سمير</td><td>890 ل.ت</td><td><span class="status new">جديد</span></td></tr></tbody></table></div></section><section class="panel stock"><div class="panel-head"><div><small>تنبيه المخزون</small><h2>يحتاج متابعة</h2></div></div><div class="stock-row"><span>🍌</span><div><b>موز بلدي</b><small>متبقي 8 كجم</small></div><i style="--w:20%"></i></div><div class="stock-row"><span>🍅</span><div><b>طماطم</b><small>متبقي 12 كجم</small></div><i style="--w:34%"></i></div><div class="stock-row"><span>🥜</span><div><b>فستق حلبي</b><small>متبقي 3 صناديق</small></div><i style="--w:12%"></i></div></section></div></main>
+  </section>
+
+  <div class="cart-drawer" id="cartDrawer"><div class="drawer-head"><h2>سلة التسوق</h2><button id="closeCart">×</button></div><div id="cartLines" class="cart-lines"><div class="empty-cart">السلة فارغة حاليًا</div></div><div class="cart-total"><span>الإجمالي</span><b id="cartTotal">0 ل.ت</b></div><button class="primary checkout">متابعة الطلب</button><small>سيُطلب تسجيل الدخول لإتمام الطلب</small></div><div class="overlay" id="overlay"></div>
+  <script src="assets/app.js"></script>
+</body>
+</html>
