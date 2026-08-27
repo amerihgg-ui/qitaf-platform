@@ -56,17 +56,115 @@ create table if not exists public.orders (
   created_at timestamptz not null default now()
 );
 
+alter table public.orders add column if not exists delivered_at timestamptz;
+alter table public.orders add column if not exists cost_total numeric(12,2) not null default 0;
+alter table public.orders add column if not exists profit_total numeric(12,2) not null default 0;
+alter table public.orders add column if not exists payment_method text not null default 'نقدي';
+
+create table if not exists public.suppliers (
+  id uuid primary key default gen_random_uuid(), name text not null,
+  phone text, currency text not null default 'ل.ت', created_at timestamptz not null default now()
+);
+create table if not exists public.drivers (
+  id uuid primary key default gen_random_uuid(), name text not null,
+  phone text, areas text[] not null default '{}', active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+create table if not exists public.purchases (
+  id uuid primary key default gen_random_uuid(), supplier_id uuid references public.suppliers(id) on delete set null,
+  product_id uuid references public.products(id) on delete restrict, quantity numeric(12,2) not null check(quantity>0),
+  unit_cost numeric(12,2) not null check(unit_cost>=0), paid numeric(12,2) not null default 0,
+  total numeric(12,2) generated always as (quantity*unit_cost) stored,
+  created_at timestamptz not null default now()
+);
+create table if not exists public.expenses (
+  id uuid primary key default gen_random_uuid(), title text not null,
+  amount numeric(12,2) not null check(amount>0), notes text, created_at timestamptz not null default now()
+);
+create table if not exists public.sales_invoices (
+  id uuid primary key default gen_random_uuid(), order_id uuid not null unique references public.orders(id) on delete restrict,
+  invoice_number text not null unique, revenue numeric(12,2) not null,
+  cost numeric(12,2) not null, profit numeric(12,2) not null,
+  created_at timestamptz not null default now()
+);
+create table if not exists public.financial_transactions (
+  id uuid primary key default gen_random_uuid(), kind text not null,
+  reference_id uuid, description text not null, amount numeric(12,2) not null,
+  created_at timestamptz not null default now()
+);
+
+create or replace function public.complete_order(p_order_id uuid)
+returns jsonb language plpgsql security definer set search_path=public as $$
+declare v_order orders%rowtype; v_item jsonb; v_product products%rowtype;
+v_cost numeric:=0; v_qty numeric; v_invoice text;
+begin
+  select * into v_order from orders where id=p_order_id for update;
+  if not found then raise exception 'الطلب غير موجود'; end if;
+  if v_order.delivered_at is not null then
+    return jsonb_build_object('ok',true,'already_completed',true,'profit',v_order.profit_total);
+  end if;
+  for v_item in select * from jsonb_array_elements(v_order.items) loop
+    v_qty:=coalesce((v_item->>'qty')::numeric,0);
+    select * into v_product from products where id=(v_item->>'id')::uuid for update;
+    if not found then raise exception 'منتج غير موجود: %',v_item->>'name'; end if;
+    if v_product.stock<v_qty then raise exception 'المخزون غير كافٍ للمنتج: %',v_product.name; end if;
+    update products set stock=stock-v_qty where id=v_product.id;
+    v_cost:=v_cost+(v_product.cost*v_qty);
+  end loop;
+  v_invoice:='INV-'||replace(v_order.order_number,'#','');
+  insert into sales_invoices(order_id,invoice_number,revenue,cost,profit)
+  values(v_order.id,v_invoice,v_order.total,v_cost,v_order.total-v_cost);
+  insert into financial_transactions(kind,reference_id,description,amount) values
+  ('sale',v_order.id,'إيراد بيع '||v_order.order_number,v_order.total),
+  ('cogs',v_order.id,'تكلفة بضاعة مباعة '||v_order.order_number,-v_cost);
+  update orders set status='تم التسليم',delivered_at=now(),cost_total=v_cost,
+  profit_total=total-v_cost where id=v_order.id;
+  return jsonb_build_object('ok',true,'invoice',v_invoice,'revenue',v_order.total,'cost',v_cost,'profit',v_order.total-v_cost);
+end $$;
+
+create or replace function public.record_purchase(p_supplier_id uuid,p_product_id uuid,p_quantity numeric,p_unit_cost numeric,p_paid numeric default 0)
+returns uuid language plpgsql security definer set search_path=public as $$
+declare v_id uuid;
+begin
+  if p_quantity<=0 or p_unit_cost<0 or p_paid<0 or p_paid>(p_quantity*p_unit_cost) then raise exception 'بيانات الشراء غير صحيحة'; end if;
+  insert into purchases(supplier_id,product_id,quantity,unit_cost,paid) values(p_supplier_id,p_product_id,p_quantity,p_unit_cost,p_paid) returning id into v_id;
+  update products set stock=stock+p_quantity,cost=p_unit_cost where id=p_product_id;
+  if p_paid>0 then insert into financial_transactions(kind,reference_id,description,amount) values('purchase_payment',v_id,'مدفوعات شراء مخزون',-p_paid); end if;
+  return v_id;
+end $$;
+
+create or replace function public.record_expense(p_title text,p_amount numeric,p_notes text default null)
+returns uuid language plpgsql security definer set search_path=public as $$
+declare v_id uuid;
+begin
+  insert into expenses(title,amount,notes) values(p_title,p_amount,p_notes) returning id into v_id;
+  insert into financial_transactions(kind,reference_id,description,amount) values('expense',v_id,p_title,-p_amount);
+  return v_id;
+end $$;
+
+create or replace function public.reset_review_data()
+returns void language plpgsql security definer set search_path=public as $$
+begin
+  truncate table financial_transactions,sales_invoices,expenses,purchases,orders,customers,drivers,suppliers,products,delivery_areas,categories restart identity cascade;
+end $$;
+
 alter table public.categories enable row level security;
 alter table public.delivery_areas enable row level security;
 alter table public.products enable row level security;
 alter table public.customers enable row level security;
 alter table public.orders enable row level security;
+alter table public.suppliers enable row level security;
+alter table public.drivers enable row level security;
+alter table public.purchases enable row level security;
+alter table public.expenses enable row level security;
+alter table public.sales_invoices enable row level security;
+alter table public.financial_transactions enable row level security;
 
 -- سياسات مراجعة مؤقتة للموقع الثابت. تُستبدل بسياسات حسابات الإدارة لاحقًا.
 do $$
 declare t text;
 begin
-  foreach t in array array['categories','delivery_areas','products','customers','orders'] loop
+  foreach t in array array['categories','delivery_areas','products','customers','orders','suppliers','drivers','purchases','expenses','sales_invoices','financial_transactions'] loop
     execute format('drop policy if exists "review_all_%s" on public.%I', t, t);
     execute format('create policy "review_all_%s" on public.%I for all to anon using (true) with check (true)', t, t);
   end loop;
@@ -85,3 +183,7 @@ create policy "review_product_images_delete" on storage.objects for delete to an
 
 grant usage on schema public to anon;
 grant select,insert,update,delete on all tables in schema public to anon;
+grant execute on function public.complete_order(uuid) to anon;
+grant execute on function public.record_purchase(uuid,uuid,numeric,numeric,numeric) to anon;
+grant execute on function public.record_expense(text,numeric,text) to anon;
+grant execute on function public.reset_review_data() to anon;
