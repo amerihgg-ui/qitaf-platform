@@ -1,4 +1,4 @@
--- قِطاف V10: شغّل الملف كاملًا مرة واحدة داخل Supabase SQL Editor.
+-- قِطاف V11: شغّل الملف كاملًا مرة واحدة داخل Supabase SQL Editor.
 create extension if not exists pgcrypto;
 
 create table if not exists public.categories (
@@ -60,6 +60,7 @@ alter table public.orders add column if not exists delivered_at timestamptz;
 alter table public.orders add column if not exists cost_total numeric(12,2) not null default 0;
 alter table public.orders add column if not exists profit_total numeric(12,2) not null default 0;
 alter table public.orders add column if not exists payment_method text not null default 'نقدي';
+alter table public.orders add column if not exists delivery_fee numeric(12,2) not null default 0;
 
 create table if not exists public.suppliers (
   id uuid primary key default gen_random_uuid(), name text not null,
@@ -102,6 +103,26 @@ create table if not exists public.platform_settings (
 );
 insert into public.platform_settings(id) values(1) on conflict(id) do nothing;
 
+alter table public.drivers add column if not exists email text;
+alter table public.drivers add column if not exists national_id text;
+alter table public.drivers add column if not exists vehicle_type text;
+alter table public.drivers add column if not exists vehicle_plate text;
+alter table public.drivers add column if not exists notes text;
+alter table public.drivers add column if not exists extra_fields jsonb not null default '{}'::jsonb;
+alter table public.suppliers add column if not exists email text;
+alter table public.suppliers add column if not exists address text;
+alter table public.suppliers add column if not exists notes text;
+alter table public.suppliers add column if not exists extra_fields jsonb not null default '{}'::jsonb;
+alter table public.customers add column if not exists address text;
+alter table public.customers add column if not exists notes text;
+alter table public.customers add column if not exists extra_fields jsonb not null default '{}'::jsonb;
+alter table public.orders add column if not exists assigned_driver_id uuid references public.drivers(id) on delete set null;
+alter table public.platform_settings add column if not exists default_currency text not null default 'ل.ت';
+alter table public.platform_settings add column if not exists low_stock_limit numeric not null default 2;
+alter table public.platform_settings add column if not exists delivery_fee numeric not null default 0;
+alter table public.platform_settings add column if not exists invoice_note text default 'شكرًا لتعاملكم معنا';
+alter table public.platform_settings add column if not exists order_prefix text not null default 'ORD';
+
 create or replace function public.complete_order(p_order_id uuid)
 returns jsonb language plpgsql security definer set search_path=public as $$
 declare v_order orders%rowtype; v_item jsonb; v_product products%rowtype;
@@ -133,11 +154,14 @@ end $$;
 
 create or replace function public.record_purchase(p_supplier_id uuid,p_product_id uuid,p_quantity numeric,p_unit_cost numeric,p_paid numeric default 0)
 returns uuid language plpgsql security definer set search_path=public as $$
-declare v_id uuid;
+declare v_id uuid; v_old_stock numeric; v_old_cost numeric; v_new_cost numeric;
 begin
   if p_quantity<=0 or p_unit_cost<0 or p_paid<0 or p_paid>(p_quantity*p_unit_cost) then raise exception 'بيانات الشراء غير صحيحة'; end if;
+  select stock,cost into v_old_stock,v_old_cost from products where id=p_product_id for update;
+  if not found then raise exception 'المنتج غير موجود'; end if;
+  v_new_cost:=case when (v_old_stock+p_quantity)>0 then ((v_old_stock*v_old_cost)+(p_quantity*p_unit_cost))/(v_old_stock+p_quantity) else p_unit_cost end;
   insert into purchases(supplier_id,product_id,quantity,unit_cost,paid) values(p_supplier_id,p_product_id,p_quantity,p_unit_cost,p_paid) returning id into v_id;
-  update products set stock=stock+p_quantity,cost=p_unit_cost where id=p_product_id;
+  update products set stock=stock+p_quantity,cost=v_new_cost where id=p_product_id;
   if p_paid>0 then insert into financial_transactions(kind,reference_id,description,amount) values('purchase_payment',v_id,'مدفوعات شراء مخزون',-p_paid); end if;
   return v_id;
 end $$;
