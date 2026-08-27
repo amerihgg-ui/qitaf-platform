@@ -1,0 +1,4 @@
+.reset-warning{display:grid;gap:12px;text-align:right}
+.reset-warning p{margin:0;color:#7a3c3c;background:#fff1f1;border:1px solid #efcccc;border-radius:10px;padding:12px;line-height:1.7}
+.reset-warning input{padding:12px;border:1px solid #d9b0b0;border-radius:9px;font:inherit}
+#resetSiteData{margin-inline-start:auto}
