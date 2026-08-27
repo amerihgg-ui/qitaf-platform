@@ -1,4 +1,4 @@
--- قِطاف V8: شغّل الملف كاملًا مرة واحدة داخل Supabase SQL Editor.
+-- قِطاف V10: شغّل الملف كاملًا مرة واحدة داخل Supabase SQL Editor.
 create extension if not exists pgcrypto;
 
 create table if not exists public.categories (
@@ -92,6 +92,15 @@ create table if not exists public.financial_transactions (
   reference_id uuid, description text not null, amount numeric(12,2) not null,
   created_at timestamptz not null default now()
 );
+create table if not exists public.platform_settings (
+  id int primary key default 1 check(id=1),
+  platform_name text not null default 'قِطاف',
+  business_name text not null default 'للبيع والتوزيع',
+  logo_url text, whatsapp text, phone text, email text, address text,
+  footer_text text not null default 'خدمة موثوقة داخل مناطق التوصيل المحددة.',
+  updated_at timestamptz not null default now()
+);
+insert into public.platform_settings(id) values(1) on conflict(id) do nothing;
 
 create or replace function public.complete_order(p_order_id uuid)
 returns jsonb language plpgsql security definer set search_path=public as $$
@@ -159,12 +168,13 @@ alter table public.purchases enable row level security;
 alter table public.expenses enable row level security;
 alter table public.sales_invoices enable row level security;
 alter table public.financial_transactions enable row level security;
+alter table public.platform_settings enable row level security;
 
 -- سياسات مراجعة مؤقتة للموقع الثابت. تُستبدل بسياسات حسابات الإدارة لاحقًا.
 do $$
 declare t text;
 begin
-  foreach t in array array['categories','delivery_areas','products','customers','orders','suppliers','drivers','purchases','expenses','sales_invoices','financial_transactions'] loop
+  foreach t in array array['categories','delivery_areas','products','customers','orders','suppliers','drivers','purchases','expenses','sales_invoices','financial_transactions','platform_settings'] loop
     execute format('drop policy if exists "review_all_%s" on public.%I', t, t);
     execute format('create policy "review_all_%s" on public.%I for all to anon using (true) with check (true)', t, t);
   end loop;
@@ -180,6 +190,16 @@ drop policy if exists "review_product_images_delete" on storage.objects;
 create policy "review_product_images_read" on storage.objects for select to anon using (bucket_id='product-images');
 create policy "review_product_images_insert" on storage.objects for insert to anon with check (bucket_id='product-images');
 create policy "review_product_images_delete" on storage.objects for delete to anon using (bucket_id='product-images');
+
+insert into storage.buckets (id,name,public,file_size_limit,allowed_mime_types)
+values ('brand-assets','brand-assets',true,5242880,array['image/jpeg','image/png','image/webp','image/svg+xml'])
+on conflict (id) do update set public=true, file_size_limit=5242880;
+drop policy if exists "review_brand_assets_read" on storage.objects;
+drop policy if exists "review_brand_assets_insert" on storage.objects;
+drop policy if exists "review_brand_assets_update" on storage.objects;
+create policy "review_brand_assets_read" on storage.objects for select to anon using (bucket_id='brand-assets');
+create policy "review_brand_assets_insert" on storage.objects for insert to anon with check (bucket_id='brand-assets');
+create policy "review_brand_assets_update" on storage.objects for update to anon using (bucket_id='brand-assets') with check (bucket_id='brand-assets');
 
 grant usage on schema public to anon;
 grant select,insert,update,delete on all tables in schema public to anon;
