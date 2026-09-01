@@ -1,0 +1,26 @@
+تشغيل تسجيل الدخول بحساب Google — قِطاف V21
+================================================
+
+أولًا: شغّل ملف supabase-setup.sql كاملًا داخل Supabase SQL Editor.
+
+ثانيًا: داخل Supabase
+1) افتح Authentication ثم Providers.
+2) افتح Google وفعّله.
+3) أضف Google Client ID وGoogle Client Secret من Google Cloud.
+4) داخل Google Cloud ضع Authorized redirect URI التالي:
+https://nqlevjwzumkuftimwipk.supabase.co/auth/v1/callback
+
+ثالثًا: داخل Authentication ثم URL Configuration
+Site URL:
+https://amerihgg-ui.github.io/qitaf-platform/
+
+أضف في Redirect URLs:
+https://amerihgg-ui.github.io/qitaf-platform/
+
+رابعًا: حساب المالك
+البريد التالي مضاف تلقائيًا بصلاحيات كاملة:
+amerihgg@gmail.com
+
+بعد تسجيل الدخول بهذا البريد افتح لوحة الإدارة ثم قسم «الصلاحيات» لإضافة بقية الحسابات.
+
+مهم: إضافة البريد في الصلاحيات لا تنشئ حساب Google جديدًا؛ هي تحدد ما يراه صاحب البريد عندما يسجل دخوله بحساب Google نفسه.

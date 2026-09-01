@@ -251,3 +251,67 @@ grant execute on function public.complete_order(uuid) to anon;
 grant execute on function public.record_purchase(uuid,uuid,numeric,numeric,numeric) to anon;
 grant execute on function public.record_expense(text,numeric,text) to anon;
 grant execute on function public.reset_review_data() to anon;
+
+-- V21: حسابات المستخدمين والصلاحيات
+create table if not exists public.platform_users (
+  id uuid primary key default gen_random_uuid(),
+  email text not null unique,
+  display_name text,
+  can_store boolean not null default true,
+  can_driver boolean not null default false,
+  can_admin boolean not null default false,
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+insert into public.platform_users(email,display_name,can_store,can_driver,can_admin,active)
+values ('amerihgg@gmail.com','مالك المنصة',true,true,true,true)
+on conflict(email) do update set can_store=true,can_driver=true,can_admin=true,active=true,updated_at=now();
+
+alter table public.platform_users enable row level security;
+drop policy if exists "users_read_own" on public.platform_users;
+create policy "users_read_own" on public.platform_users for select to authenticated
+using (lower(email)=lower(coalesce(auth.jwt()->>'email','')));
+
+create or replace function public.my_platform_permissions()
+returns jsonb language sql stable security definer set search_path=public as $$
+  select coalesce(
+    (select jsonb_build_object(
+      'email',email,'display_name',display_name,'can_store',can_store,
+      'can_driver',can_driver,'can_admin',can_admin,'active',active)
+     from platform_users
+     where lower(email)=lower(coalesce(auth.jwt()->>'email','')) limit 1),
+    jsonb_build_object('email',coalesce(auth.jwt()->>'email',''),'can_store',true,
+      'can_driver',false,'can_admin',false,'active',true)
+  );
+$$;
+
+create or replace function public.admin_list_permissions()
+returns setof public.platform_users language plpgsql stable security definer set search_path=public as $$
+begin
+  if not exists(select 1 from platform_users where lower(email)=lower(coalesce(auth.jwt()->>'email','')) and active and can_admin)
+  then raise exception 'غير مصرح'; end if;
+  return query select * from platform_users order by created_at desc;
+end $$;
+
+create or replace function public.admin_save_permission(
+  p_email text,p_display_name text,p_can_store boolean,p_can_driver boolean,p_can_admin boolean,p_active boolean default true)
+returns uuid language plpgsql security definer set search_path=public as $$
+declare v_id uuid;
+begin
+  if not exists(select 1 from platform_users where lower(email)=lower(coalesce(auth.jwt()->>'email','')) and active and can_admin)
+  then raise exception 'غير مصرح'; end if;
+  if trim(coalesce(p_email,''))='' then raise exception 'البريد مطلوب'; end if;
+  insert into platform_users(email,display_name,can_store,can_driver,can_admin,active,updated_at)
+  values(lower(trim(p_email)),nullif(trim(coalesce(p_display_name,'')),''),p_can_store,p_can_driver,p_can_admin,p_active,now())
+  on conflict(email) do update set display_name=excluded.display_name,can_store=excluded.can_store,
+    can_driver=excluded.can_driver,can_admin=excluded.can_admin,active=excluded.active,updated_at=now()
+  returning id into v_id;
+  return v_id;
+end $$;
+
+grant select on public.platform_users to authenticated;
+grant execute on function public.my_platform_permissions() to authenticated;
+grant execute on function public.admin_list_permissions() to authenticated;
+grant execute on function public.admin_save_permission(text,text,boolean,boolean,boolean,boolean) to authenticated;
