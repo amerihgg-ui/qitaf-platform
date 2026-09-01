@@ -1,0 +1,20 @@
+قِطاف V17 — برومبتات فيديو Gemini
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1) فيديو اللوجو أعلى الصفحة — 10 ثوانٍ
+اسم الملف بعد التنزيل:
+qitaf-logo-intro.mp4
+
+Prompt:
+Create a seamless 10-second premium logo animation for a modern Arabic food sales and distribution platform called “قِطاف”. Use the uploaded Qitaf logo as the exact visual reference and preserve its Arabic lettering, proportions, colors, and icon without redesigning or misspelling it. Begin on a deep forest-green background with subtle warm ivory light. Small elegant particles inspired by fresh leaves and fruit textures move gently toward the center, then assemble the original logo with precise, clean motion. Add a restrained warm-orange light sweep across the finished logo. Hold the complete logo clearly for the final 2 seconds, then transition smoothly back to the opening frame for a perfect continuous loop. Premium, contemporary, minimal, realistic lighting, smooth cinematic motion, no vintage style, no extra text, no slogans, no people, no watermark, no mockup, no camera shake. Landscape 16:9, 1920×1080, exactly 10 seconds, muted visual suitable for website autoplay.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2) فيديو الترحيب لأول زيارة — 10 ثوانٍ
+اسم الملف بعد التنزيل:
+qitaf-welcome.mp4
+
+Prompt:
+Create a welcoming 10-second cinematic intro for a modern Arabic food sales and distribution platform called “قِطاف”. Use the uploaded Qitaf logo exactly as provided and never alter or misspell it. Show a refined visual journey: fresh selected produce in clean natural light, a neatly organized order being prepared, a delivery box moving through a smooth abstract route, and the order arriving ready for the customer. Connect all scenes with fluid match transitions in the platform’s deep forest-green, warm ivory, and restrained orange palette. End with the original Qitaf logo centered clearly on a calm premium background for 2 seconds. The mood is trustworthy, warm, organized, and modern—not a supermarket advertisement. No spoken narration, no generated captions, no extra text, no prices, no people’s faces, no watermark, no other logos. Landscape 16:9, 1920×1080, exactly 10 seconds, polished realistic motion and soft modern sound design.
+
+بعد إنشاء الفيديوهين:
+ضعهما داخل مجلد assets بالأسماء المكتوبة أعلاه.

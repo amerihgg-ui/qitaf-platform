@@ -5,8 +5,10 @@ create table if not exists public.categories (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   icon text default '🍎',
+  image_url text,
   created_at timestamptz not null default now()
 );
+alter table public.categories add column if not exists image_url text;
 
 create table if not exists public.delivery_areas (
   id uuid primary key default gen_random_uuid(),
@@ -26,8 +28,14 @@ create table if not exists public.products (
   stock numeric(12,2) not null default 0,
   icon text default '🍎',
   image_url text,
+  offer_active boolean not null default false,
+  discount_percent numeric(5,2) not null default 0,
+  offer_price numeric(12,2),
   created_at timestamptz not null default now()
 );
+alter table public.products add column if not exists offer_active boolean not null default false;
+alter table public.products add column if not exists discount_percent numeric(5,2) not null default 0;
+alter table public.products add column if not exists offer_price numeric(12,2);
 
 create table if not exists public.customers (
   id uuid primary key default gen_random_uuid(),
@@ -224,6 +232,18 @@ drop policy if exists "review_brand_assets_update" on storage.objects;
 create policy "review_brand_assets_read" on storage.objects for select to anon using (bucket_id='brand-assets');
 create policy "review_brand_assets_insert" on storage.objects for insert to anon with check (bucket_id='brand-assets');
 create policy "review_brand_assets_update" on storage.objects for update to anon using (bucket_id='brand-assets') with check (bucket_id='brand-assets');
+
+insert into storage.buckets (id,name,public,file_size_limit,allowed_mime_types)
+values ('category-images','category-images',true,5242880,array['image/jpeg','image/png','image/webp','image/gif'])
+on conflict (id) do update set public=true, file_size_limit=5242880;
+drop policy if exists "review_category_images_read" on storage.objects;
+drop policy if exists "review_category_images_insert" on storage.objects;
+drop policy if exists "review_category_images_update" on storage.objects;
+drop policy if exists "review_category_images_delete" on storage.objects;
+create policy "review_category_images_read" on storage.objects for select to anon using (bucket_id='category-images');
+create policy "review_category_images_insert" on storage.objects for insert to anon with check (bucket_id='category-images');
+create policy "review_category_images_update" on storage.objects for update to anon using (bucket_id='category-images') with check (bucket_id='category-images');
+create policy "review_category_images_delete" on storage.objects for delete to anon using (bucket_id='category-images');
 
 grant usage on schema public to anon;
 grant select,insert,update,delete on all tables in schema public to anon;
