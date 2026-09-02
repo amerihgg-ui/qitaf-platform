@@ -13,8 +13,16 @@ alter table public.categories add column if not exists image_url text;
 create table if not exists public.delivery_areas (
   id uuid primary key default gen_random_uuid(),
   name text not null unique,
+  available_from time not null default '09:00',
+  available_to time not null default '18:00',
+  active boolean not null default true,
+  notes text,
   created_at timestamptz not null default now()
 );
+alter table public.delivery_areas add column if not exists available_from time not null default '09:00';
+alter table public.delivery_areas add column if not exists available_to time not null default '18:00';
+alter table public.delivery_areas add column if not exists active boolean not null default true;
+alter table public.delivery_areas add column if not exists notes text;
 
 create table if not exists public.products (
   id uuid primary key default gen_random_uuid(),
@@ -69,6 +77,7 @@ alter table public.orders add column if not exists cost_total numeric(12,2) not 
 alter table public.orders add column if not exists profit_total numeric(12,2) not null default 0;
 alter table public.orders add column if not exists payment_method text not null default 'نقدي';
 alter table public.orders add column if not exists delivery_fee numeric(12,2) not null default 0;
+alter table public.orders add column if not exists delivery_area_id uuid references public.delivery_areas(id) on delete set null;
 
 create table if not exists public.suppliers (
   id uuid primary key default gen_random_uuid(), name text not null,
@@ -414,3 +423,11 @@ drop policy if exists "customer_profile_insert" on public.customers;
 create policy "customer_profile_insert" on public.customers for insert to authenticated with check (lower(email)=lower(coalesce(auth.jwt()->>'email','')));
 drop policy if exists "customer_profile_update" on public.customers;
 create policy "customer_profile_update" on public.customers for update to authenticated using (lower(email)=lower(coalesce(auth.jwt()->>'email',''))) with check (lower(email)=lower(coalesce(auth.jwt()->>'email','')));
+
+drop policy if exists "authenticated_delivery_areas_read" on public.delivery_areas;
+create policy "authenticated_delivery_areas_read" on public.delivery_areas for select to authenticated
+using (active or public.has_platform_permission('driver') or public.has_platform_permission('admin'));
+
+drop policy if exists "delivery_areas_admin_write" on public.delivery_areas;
+create policy "delivery_areas_admin_write" on public.delivery_areas for all to authenticated
+using (public.is_platform_admin()) with check (public.is_platform_admin());
